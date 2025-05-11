@@ -1,0 +1,6 @@
+@ATON_APIQuest_HostAddress = http://localhost:5150
+
+GET {{ATON_APIQuest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
