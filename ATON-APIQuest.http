@@ -27,9 +27,8 @@ Content-Type: application/json
   "admin": false,
   "createdBy": "Admin"
 }
-
 ###
-@id = 67b2673c-d7cc-4625-bf9c-ccf3b79610ff
+
 DELETE {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 
 ###
