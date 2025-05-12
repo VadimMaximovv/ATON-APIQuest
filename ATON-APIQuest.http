@@ -1,6 +1,35 @@
-@ATON_APIQuest_HostAddress = http://localhost:5150
+@ATON_APIQuest_HostAddress = https://localhost:44356
 
-GET {{ATON_APIQuest_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{ATON_APIQuest_HostAddress}}/api/users
+Content-Type: application/json
+{
+  "login": "Admin",
+  "password": "Admin123",
+  "name": "System Administrator",
+  "gender": 1,
+  "birthday": null,
+  "admin": true,
+  "createdBy": "System"
+}
+###
+
+GET {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
+###
+
+PUT {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
+Content-Type: application/json
+{
+  "login": "Admin1",
+  "password": "Admin1234",
+  "name": "System Administrator1",
+  "gender": 0,
+  "birthday": null,
+  "admin": false,
+  "createdBy": "Admin"
+}
+
+###
+@id = 67b2673c-d7cc-4625-bf9c-ccf3b79610ff
+DELETE {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 
 ###
