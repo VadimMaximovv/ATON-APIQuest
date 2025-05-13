@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ATON_APIQuest.Users;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace ATON_APIQuest.Controllers
 {
@@ -74,7 +76,7 @@ namespace ATON_APIQuest.Controllers
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<User>> PostUserItem(User UserItem)
         {
             _context.Users.Add(UserItem);
@@ -82,7 +84,7 @@ namespace ATON_APIQuest.Controllers
 
             //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
             return CreatedAtAction(nameof(GetUser), new { id = UserItem.Id }, UserItem);
-        }
+        }*/
 
 
         // DELETE: api/Users/5
@@ -105,5 +107,56 @@ namespace ATON_APIQuest.Controllers
         {
             return _context.Users.Any(e => e.Id == id);
         }
+
+        #region Create
+        [HttpPost]
+        public async Task<ActionResult<User>> CreateUser([FromBody] User request, [FromQuery] string adminLogin, string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can create users");
+
+            if (!IsValidLogin(request.Login) || !IsValidPassword(request.Password) || !IsValidName(request.Name))
+                return BadRequest("Invalid input data");
+
+            if (_context.LoginExists(request.Login))
+                return Conflict("Login already exists");
+
+            var user = new User
+            {
+                Login = request.Login,
+                Password = request.Password,
+                Name = request.Name,
+                Gender = request.Gender,
+                Birthday = request.Birthday,
+                Admin = request.Admin,
+                CreatedBy = admin.Login
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
+            return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+        }
+        #endregion
+
+        #region Helpers
+        private static bool IsValidLogin(string login)
+        {
+            return !string.IsNullOrWhiteSpace(login) && login.All(c => char.IsLetterOrDigit(c) && c < 128);
+
+        }
+
+        private static bool IsValidPassword(string password)
+        {
+            return !string.IsNullOrWhiteSpace(password) && password.All(c => char.IsLetterOrDigit(c) && c < 128);
+        }
+
+        private static bool IsValidName(string name)
+        {
+            return !string.IsNullOrWhiteSpace(name) && name.All(c => char.IsLetter(c) || c == ' ');
+        }
+        #endregion
     }
 }

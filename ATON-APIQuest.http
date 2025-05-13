@@ -8,7 +8,7 @@ Content-Type: application/json
   "name": "System Administrator",
   "gender": 1,
   "birthday": null,
-  "admin": true,
+  "isAdmin": true,
   "createdBy": "System"
 }
 ###
@@ -16,19 +16,36 @@ Content-Type: application/json
 GET {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 ###
 
+@id=dc1741f5-d630-489e-b2d0-de1f00f19746
 PUT {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 Content-Type: application/json
 {
-  "login": "Admin1",
-  "password": "Admin1234",
   "name": "System Administrator1",
   "gender": 0,
   "birthday": null,
   "admin": false,
-  "createdBy": "Admin"
 }
 ###
 
 DELETE {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
+
+###
+
+
+###
+
+@adminLogin=Admin
+@adminPassword=Admin123
+POST {{ATON_APIQuest_HostAddress}}/api/Users?adminLogin={{adminLogin}}&adminPassword={{adminPassword}}
+Content-Type: application/json
+{
+  "login": "user1",
+  "password": "pass123",
+  "name": "John Doe",
+  "gender": 1,
+  "birthday": "1990-01-01",
+  "isAdmin": false,
+  "createdBy": "Admin"
+}
 
 ###

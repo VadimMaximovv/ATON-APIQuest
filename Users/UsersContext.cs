@@ -1,26 +1,45 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace ATON_APIQuest.Users
 {
     public class UsersContext : DbContext
     {
+        public DbSet<User> Users { get; set; } = null!;
+
         public UsersContext(DbContextOptions<UsersContext> options) : base(options) 
         {
-            var admin = new User
+            if (GetByLoginAndPassword("Admin", "Admin123") == null)
             {
-                Login = "Admin",
-                Password = "Admin123",
-                Name = "System Administrator",
-                Gender = 1,
-                Birthday = null,
-                Admin = true,
-                CreatedBy = "System"
-            };
+                var admin = new User
+                {
+                    Login = "Admin",
+                    Password = "Admin123",
+                    Name = "System Administrator",
+                    Gender = 1,
+                    Birthday = null,
+                    Admin = true,
+                    CreatedBy = "System"
+                };
 
-            Users.AddAsync(admin);
-            SaveChangesAsync();
+                Users.AddAsync(admin);
+                SaveChangesAsync();
+            }
+            
         }
 
-        public DbSet<User> Users { get; set; } = null!;
+        public User? GetByLoginAndPassword(string login, string password)
+        {
+            return Users
+        .Where(u => u.Login == login && u.Password == password)
+        .AsEnumerable()  // Переключаем на клиентскую обработку
+        .FirstOrDefault(u => u.IsActive);
+
+        }
+
+        public bool LoginExists(string login)
+        {
+            return Users.Any(u => u.Login==login);
+        }
     }
 }
