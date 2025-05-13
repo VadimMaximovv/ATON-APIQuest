@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ATON_APIQuest.Users;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace ATON_APIQuest.Controllers
 {
@@ -45,15 +43,21 @@ namespace ATON_APIQuest.Controllers
 
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(Guid id, User user)
+        /*[HttpPut("{id}")]
+        public async Task<IActionResult> PutUser(Guid id, [FromBody] User user)
         {
-            if (id != user.Id)
+            var existingUser = await _context.Users.FindAsync(id);
+            if (existingUser == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            existingUser.Name = user.Name;
+            existingUser.Gender = user.Gender;
+            existingUser.Birthday = user.Birthday;
+
+            existingUser.ModifiedOn = DateTime.UtcNow;
+            existingUser.ModifiedBy = user.Login; // Здесь должен быть логин текущего пользователя
 
             try
             {
@@ -72,7 +76,7 @@ namespace ATON_APIQuest.Controllers
             }
 
             return NoContent();
-        }
+        }*/
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -139,6 +143,136 @@ namespace ATON_APIQuest.Controllers
             //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
+        #endregion
+
+        #region Update-1
+        [HttpPut("details")]
+        public async Task<ActionResult<User>> UpdateUserDetails([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
+        {
+            var currentUser = _context.GetByLoginAndPassword(login, password);
+            if (currentUser == null)
+                return Unauthorized("Invalid credentials");
+
+            var userToUpdate = _context.GetByLogin(request.Login);
+            if (userToUpdate == null)
+                return NotFound("User not found");
+
+            if (!currentUser.Admin && (currentUser.Login != userToUpdate.Login || userToUpdate.RevokedOn != null))
+                return Unauthorized("You can only update your own active account");
+
+            if (!IsValidName(request.Name))
+                return BadRequest("Invalid name");
+
+            userToUpdate.Name = request.Name;
+            userToUpdate.Gender = request.Gender;
+            userToUpdate.Birthday = request.Birthday;
+
+            userToUpdate.ModifiedOn = DateTime.UtcNow;
+            userToUpdate.ModifiedBy = currentUser.Login;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.LoginExists(login))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        [HttpPut("password")]
+        public async Task<ActionResult<User>> UpdatePassword([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
+        {
+            var currentUser = _context.GetByLoginAndPassword(login, password);
+            if (currentUser == null)
+                return Unauthorized("Invalid credentials");
+
+            var userToUpdate = _context.GetByLogin(request.Login);
+            if (userToUpdate == null)
+                return NotFound("User not found");
+
+            if (!currentUser.Admin && (currentUser.Login != userToUpdate.Login || userToUpdate.RevokedOn != null))
+                return Unauthorized("You can only update your own active account");
+
+            if (!IsValidPassword(request.Password))
+                return BadRequest("Invalid password");
+
+            userToUpdate.Password = request.Password;
+            userToUpdate.ModifiedOn = DateTime.UtcNow;
+            userToUpdate.ModifiedBy = currentUser.Login;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.LoginExists(login))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        //[HttpPut("login")]
+        [HttpPut]
+        public async Task<ActionResult<User>> UpdateLogin([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
+        {
+            var currentUser = _context.GetByLoginAndPassword(login, password);
+            if (currentUser == null)
+                return Unauthorized("Invalid credentials");
+
+            var userToUpdate = _context.GetByLogin(login);
+            if (userToUpdate == null)
+                return NotFound("User not found");
+
+            if (!currentUser.Admin && (currentUser.Login != userToUpdate.Login || userToUpdate.RevokedOn != null))
+                return Unauthorized("You can only update your own active account");
+
+            if (!IsValidLogin(request.Login))
+                return BadRequest("Invalid login");
+
+            if (_context.LoginExists(request.Login))
+                return Conflict("Login already exists");
+
+            userToUpdate.Login = request.Login;
+            userToUpdate.ModifiedOn = DateTime.UtcNow;
+            userToUpdate.ModifiedBy = currentUser.Login;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.LoginExists(login))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
         #endregion
 
         #region Helpers

@@ -31,10 +31,16 @@ namespace ATON_APIQuest.Users
         public User? GetByLoginAndPassword(string login, string password)
         {
             return Users
-        .Where(u => u.Login == login && u.Password == password)
-        .AsEnumerable()  // Переключаем на клиентскую обработку
-        .FirstOrDefault(u => u.IsActive);
+                .Where(u => u.Login == login && u.Password == password)
+                .AsEnumerable()
+                .FirstOrDefault(u => u.RevokedOn == null);
+        }
 
+        public User? GetByLogin(string login)
+        {
+            return Users.Where(u => u.Login == login)
+                .AsEnumerable()
+                .FirstOrDefault(u => u.RevokedOn == null);
         }
 
         public bool LoginExists(string login)

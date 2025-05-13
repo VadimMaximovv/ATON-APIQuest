@@ -16,14 +16,23 @@ Content-Type: application/json
 GET {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 ###
 
-@id=dc1741f5-d630-489e-b2d0-de1f00f19746
+@id=e4c7a441-fdb0-49ae-995b-3633b236af65
 PUT {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 Content-Type: application/json
 {
-  "name": "System Administrator1",
-  "gender": 0,
-  "birthday": null,
-  "admin": false,
+    "login": "Admin",
+    "password": "Admin123",
+    "name": "System Administrator",
+    "gender": 1,
+    "birthday": null,
+    "admin": true,
+    "createdOn": "2025-05-13T12:28:28.5082906Z",
+    "createdBy": "System",
+    "modifiedOn": null,
+    "modifiedBy": null,
+    "revokedOn": null,
+    "revokedBy": null,
+    "isActive": true
 }
 ###
 

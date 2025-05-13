@@ -16,5 +16,5 @@ public class User
     public DateTime? RevokedOn { get; set; }
     public string? RevokedBy { get; set; }
 
-    public bool IsActive => RevokedOn == null;
+    //public bool IsActive => RevokedOn == null;
 }
