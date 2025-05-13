@@ -92,7 +92,7 @@ namespace ATON_APIQuest.Controllers
 
 
         // DELETE: api/Users/5
-        [HttpDelete("{id}")]
+        /*[HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -105,7 +105,7 @@ namespace ATON_APIQuest.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
+        }*/
 
         private bool UserExists(Guid id)
         {
@@ -323,6 +323,56 @@ namespace ATON_APIQuest.Controllers
                 return Unauthorized("Only admins can view users by age");
 
             return Ok(_context.GetUsersOlderThan(age));
+        }
+        #endregion
+
+        #region Delete
+        [HttpDelete("{login}")]
+        public async Task<IActionResult> DeleteUser(string login, [FromQuery] bool softDelete, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can delete users");
+
+            var userToDelete = _context.GetByLogin(login);
+            if (userToDelete == null)
+                return NotFound("User not found");
+            
+            if (softDelete)
+            {
+                userToDelete.RevokedOn = DateTime.UtcNow;
+                userToDelete.RevokedBy = admin.Login;
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            else
+            {
+                _context.Users.Remove(userToDelete);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }    
+        }
+        #endregion
+
+        #region Update-2
+        [HttpPut("restore/{login}")]
+        public async Task<ActionResult<User>> RestoreUser(string login, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can restore users");
+
+            var userToRestore = _context.GetByLogin(login);
+            if (userToRestore == null)
+                return NotFound("User not found");
+
+            userToRestore.RevokedOn = null;
+            userToRestore.RevokedBy = null;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
         #endregion
 

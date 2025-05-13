@@ -33,14 +33,14 @@ namespace ATON_APIQuest.Users
             return Users
                 .Where(u => u.Login == login && u.Password == password)
                 .AsEnumerable()
-                .FirstOrDefault(u => u.RevokedOn == null);
+                .FirstOrDefault();
         }
 
         public User? GetByLogin(string login)
         {
             return Users.Where(u => u.Login == login)
                 .AsEnumerable()
-                .FirstOrDefault(u => u.RevokedOn == null);
+                .FirstOrDefault();
         }
 
         public User? GetUsersOlderThan(int age)

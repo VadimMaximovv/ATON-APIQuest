@@ -37,9 +37,6 @@ DELETE {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 
 ###
 
-
-###
-
 @adminLogin=Admin
 @adminPassword=Admin123
 POST {{ATON_APIQuest_HostAddress}}/api/Users?adminLogin={{adminLogin}}&adminPassword={{adminPassword}}
