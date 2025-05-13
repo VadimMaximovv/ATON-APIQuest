@@ -13,9 +13,6 @@ Content-Type: application/json
 }
 ###
 
-GET {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
-###
-
 @id=e4c7a441-fdb0-49ae-995b-3633b236af65
 PUT {{ATON_APIQuest_HostAddress}}/api/users/{{id}}
 Content-Type: application/json

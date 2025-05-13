@@ -43,6 +43,13 @@ namespace ATON_APIQuest.Users
                 .FirstOrDefault(u => u.RevokedOn == null);
         }
 
+        public User? GetUsersOlderThan(int age)
+        {
+            return Users.Where(u => u.Birthday.HasValue && DateTime.Today.Year - u.Birthday.Value.Year > age)
+                .AsEnumerable()
+                .FirstOrDefault(u => u.RevokedOn == null);
+
+        }
         public bool LoginExists(string login)
         {
             return Users.Any(u => u.Login==login);

@@ -21,11 +21,11 @@ namespace ATON_APIQuest.Controllers
         }
 
         // GET: api/Users
-        [HttpGet]
+        /*[HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
-        }
+        }*/
 
         // GET: api/Users/5
         [HttpGet("{id}")]
@@ -229,8 +229,7 @@ namespace ATON_APIQuest.Controllers
             return NoContent();
         }
 
-        //[HttpPut("login")]
-        [HttpPut]
+        [HttpPut("login")]
         public async Task<ActionResult<User>> UpdateLogin([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
         {
             var currentUser = _context.GetByLoginAndPassword(login, password);
@@ -272,14 +271,65 @@ namespace ATON_APIQuest.Controllers
 
             return NoContent();
         }
+        #endregion
 
+        #region Read
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<User>>> GetAllActiveUsers([FromQuery] string adminLogin, [FromQuery] string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can view all active users");
+
+            return await _context.Users.ToListAsync();
+        }
+
+        [HttpGet("login/{login}")]
+        public async Task<ActionResult<User>> GetUserByLogin(string login, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can view user details");
+
+            var user = _context.GetByLogin(login);
+            if (user == null)
+                return NotFound("User not found");
+
+            return Ok(new
+            {
+                user.Name,
+                user.Gender,
+                user.Birthday,
+                IsActive = user.RevokedOn == null
+            });
+        }
+        
+        [HttpGet("self")]
+        public async Task<ActionResult<User>> GetCurrentUser([FromQuery] string login, [FromQuery] string password)
+        {
+            var user = _context.GetByLoginAndPassword(login, password);
+            if (user == null || user.RevokedOn != null)
+                return Unauthorized("Invalid credentials or inactive account");
+
+            return user;
+        }
+        
+        
+        [HttpGet("older-than/{age}")]
+        public async Task<ActionResult<IEnumerable<User>>> GetUsersOlderThan(int age, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
+        {
+            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            if (admin == null || !admin.Admin)
+                return Unauthorized("Only admins can view users by age");
+
+            return Ok(_context.GetUsersOlderThan(age));
+        }
         #endregion
 
         #region Helpers
         private static bool IsValidLogin(string login)
         {
             return !string.IsNullOrWhiteSpace(login) && login.All(c => char.IsLetterOrDigit(c) && c < 128);
-
         }
 
         private static bool IsValidPassword(string password)
