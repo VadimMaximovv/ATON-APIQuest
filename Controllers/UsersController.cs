@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ATON_APIQuest.Users;
 
@@ -20,13 +15,6 @@ namespace ATON_APIQuest.Controllers
             _context = context;
         }
 
-        // GET: api/Users
-        /*[HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }*/
-
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(Guid id)
@@ -39,77 +27,6 @@ namespace ATON_APIQuest.Controllers
             }
 
             return user;
-        }
-
-        // PUT: api/Users/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        /*[HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(Guid id, [FromBody] User user)
-        {
-            var existingUser = await _context.Users.FindAsync(id);
-            if (existingUser == null)
-            {
-                return NotFound();
-            }
-
-            existingUser.Name = user.Name;
-            existingUser.Gender = user.Gender;
-            existingUser.Birthday = user.Birthday;
-
-            existingUser.ModifiedOn = DateTime.UtcNow;
-            existingUser.ModifiedBy = user.Login; // Здесь должен быть логин текущего пользователя
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }*/
-
-        // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        /*[HttpPost]
-        public async Task<ActionResult<User>> PostUserItem(User UserItem)
-        {
-            _context.Users.Add(UserItem);
-            await _context.SaveChangesAsync();
-
-            //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
-            return CreatedAtAction(nameof(GetUser), new { id = UserItem.Id }, UserItem);
-        }*/
-
-
-        // DELETE: api/Users/5
-        /*[HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(Guid id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }*/
-
-        private bool UserExists(Guid id)
-        {
-            return _context.Users.Any(e => e.Id == id);
         }
 
         #region Create
@@ -140,7 +57,6 @@ namespace ATON_APIQuest.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            //    return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
         #endregion

@@ -1,15 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace ATON_APIQuest.Users
 {
     public class UsersContext : DbContext
     {
         public DbSet<User> Users { get; set; } = null!;
-
         public UsersContext(DbContextOptions<UsersContext> options) : base(options) 
         {
-            if (GetByLoginAndPassword("Admin", "Admin123") == null)
+            if (GetByLogin("Admin") == null)
             {
                 var admin = new User
                 {

@@ -15,6 +15,4 @@ public class User
     public string? ModifiedBy { get; set; }
     public DateTime? RevokedOn { get; set; }
     public string? RevokedBy { get; set; }
-
-    //public bool IsActive => RevokedOn == null;
 }
