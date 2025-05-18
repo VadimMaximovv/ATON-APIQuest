@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ATON_APIQuest.Users;
+using ATON_APIQuest.Models.Users;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace ATON_APIQuest.Controllers
 {
@@ -8,18 +9,18 @@ namespace ATON_APIQuest.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly UsersContext _context;
+        private readonly UsersService _service;
 
-        public UsersController(UsersContext context)
+        public UsersController(UsersService service)
         {
-            _context = context;
+            _service = service;
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _service.Users.FindAsync(id);
 
             if (user == null)
             {
@@ -33,14 +34,14 @@ namespace ATON_APIQuest.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> CreateUser([FromBody] User request, [FromQuery] string adminLogin, string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can create users");
 
             if (!IsValidLogin(request.Login) || !IsValidPassword(request.Password) || !IsValidName(request.Name))
                 return BadRequest("Invalid input data");
 
-            if (_context.LoginExists(request.Login))
+            if (_service.LoginExists(request.Login))
                 return Conflict("Login already exists");
 
             var user = new User
@@ -54,8 +55,8 @@ namespace ATON_APIQuest.Controllers
                 CreatedBy = admin.Login
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            _service.Users.Add(user);
+            await _service.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
@@ -65,11 +66,11 @@ namespace ATON_APIQuest.Controllers
         [HttpPut("details")]
         public async Task<ActionResult<User>> UpdateUserDetails([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
         {
-            var currentUser = _context.GetByLoginAndPassword(login, password);
+            var currentUser = _service.GetByLoginAndPassword(login, password);
             if (currentUser == null)
                 return Unauthorized("Invalid credentials");
 
-            var userToUpdate = _context.GetByLogin(request.Login);
+            var userToUpdate = _service.GetByLogin(request.Login);
             if (userToUpdate == null)
                 return NotFound("User not found");
 
@@ -86,33 +87,17 @@ namespace ATON_APIQuest.Controllers
             userToUpdate.ModifiedOn = DateTime.UtcNow;
             userToUpdate.ModifiedBy = currentUser.Login;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.LoginExists(login))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await TryToSave(login);
         }
 
         [HttpPut("password")]
         public async Task<ActionResult<User>> UpdatePassword([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
         {
-            var currentUser = _context.GetByLoginAndPassword(login, password);
+            var currentUser = _service.GetByLoginAndPassword(login, password);
             if (currentUser == null)
                 return Unauthorized("Invalid credentials");
 
-            var userToUpdate = _context.GetByLogin(request.Login);
+            var userToUpdate = _service.GetByLogin(request.Login);
             if (userToUpdate == null)
                 return NotFound("User not found");
 
@@ -126,33 +111,17 @@ namespace ATON_APIQuest.Controllers
             userToUpdate.ModifiedOn = DateTime.UtcNow;
             userToUpdate.ModifiedBy = currentUser.Login;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.LoginExists(login))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await TryToSave(login);
         }
 
         [HttpPut("login")]
         public async Task<ActionResult<User>> UpdateLogin([FromBody] User request, [FromQuery] string login, [FromQuery] string password)
         {
-            var currentUser = _context.GetByLoginAndPassword(login, password);
+            var currentUser = _service.GetByLoginAndPassword(login, password);
             if (currentUser == null)
                 return Unauthorized("Invalid credentials");
 
-            var userToUpdate = _context.GetByLogin(login);
+            var userToUpdate = _service.GetByLogin(login);
             if (userToUpdate == null)
                 return NotFound("User not found");
 
@@ -162,30 +131,14 @@ namespace ATON_APIQuest.Controllers
             if (!IsValidLogin(request.Login))
                 return BadRequest("Invalid login");
 
-            if (_context.LoginExists(request.Login))
+            if (_service.LoginExists(request.Login))
                 return Conflict("Login already exists");
 
             userToUpdate.Login = request.Login;
             userToUpdate.ModifiedOn = DateTime.UtcNow;
             userToUpdate.ModifiedBy = currentUser.Login;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.LoginExists(login))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await TryToSave(login);
         }
         #endregion
 
@@ -193,21 +146,21 @@ namespace ATON_APIQuest.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetAllActiveUsers([FromQuery] string adminLogin, [FromQuery] string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can view all active users");
 
-            return await _context.Users.ToListAsync();
+            return await _service.Users.ToListAsync();
         }
 
         [HttpGet("login/{login}")]
         public async Task<ActionResult<User>> GetUserByLogin(string login, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can view user details");
 
-            var user = _context.GetByLogin(login);
+            var user = _service.GetByLogin(login);
             if (user == null)
                 return NotFound("User not found");
 
@@ -223,7 +176,7 @@ namespace ATON_APIQuest.Controllers
         [HttpGet("self")]
         public async Task<ActionResult<User>> GetCurrentUser([FromQuery] string login, [FromQuery] string password)
         {
-            var user = _context.GetByLoginAndPassword(login, password);
+            var user = _service.GetByLoginAndPassword(login, password);
             if (user == null || user.RevokedOn != null)
                 return Unauthorized("Invalid credentials or inactive account");
 
@@ -234,11 +187,11 @@ namespace ATON_APIQuest.Controllers
         [HttpGet("older-than/{age}")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsersOlderThan(int age, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can view users by age");
 
-            return Ok(_context.GetUsersOlderThan(age));
+            return Ok(_service.GetUsersOlderThan(age));
         }
         #endregion
 
@@ -246,11 +199,11 @@ namespace ATON_APIQuest.Controllers
         [HttpDelete("{login}")]
         public async Task<IActionResult> DeleteUser(string login, [FromQuery] bool softDelete, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can delete users");
 
-            var userToDelete = _context.GetByLogin(login);
+            var userToDelete = _service.GetByLogin(login);
             if (userToDelete == null)
                 return NotFound("User not found");
             
@@ -259,13 +212,13 @@ namespace ATON_APIQuest.Controllers
                 userToDelete.RevokedOn = DateTime.UtcNow;
                 userToDelete.RevokedBy = admin.Login;
 
-                await _context.SaveChangesAsync();
+                await _service.SaveChangesAsync();
                 return NoContent();
             }
             else
             {
-                _context.Users.Remove(userToDelete);
-                await _context.SaveChangesAsync();
+                _service.Users.Remove(userToDelete);
+                await _service.SaveChangesAsync();
 
                 return NoContent();
             }    
@@ -276,18 +229,18 @@ namespace ATON_APIQuest.Controllers
         [HttpPut("restore/{login}")]
         public async Task<ActionResult<User>> RestoreUser(string login, [FromQuery] string adminLogin, [FromQuery] string adminPassword)
         {
-            var admin = _context.GetByLoginAndPassword(adminLogin, adminPassword);
+            var admin = _service.GetByLoginAndPassword(adminLogin, adminPassword);
             if (admin == null || !admin.Admin)
                 return Unauthorized("Only admins can restore users");
 
-            var userToRestore = _context.GetByLogin(login);
+            var userToRestore = _service.GetByLogin(login);
             if (userToRestore == null)
                 return NotFound("User not found");
 
             userToRestore.RevokedOn = null;
             userToRestore.RevokedBy = null;
 
-            await _context.SaveChangesAsync();
+            await _service.SaveChangesAsync();
             return NoContent();
         }
         #endregion
@@ -306,6 +259,27 @@ namespace ATON_APIQuest.Controllers
         private static bool IsValidName(string name)
         {
             return !string.IsNullOrWhiteSpace(name) && name.All(c => char.IsLetter(c) || c == ' ');
+        }
+
+        private async Task<ActionResult<User>> TryToSave(string login)
+        {
+            try
+            {
+                await _service.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_service.LoginExists(login))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
         #endregion
     }

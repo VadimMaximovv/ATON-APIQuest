@@ -1,4 +1,4 @@
-﻿namespace ATON_APIQuest.Users;
+﻿namespace ATON_APIQuest.Models.Users;
 
 public class User
 {

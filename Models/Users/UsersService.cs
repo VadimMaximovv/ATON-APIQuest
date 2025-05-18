@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace ATON_APIQuest.Users
+namespace ATON_APIQuest.Models.Users
 {
-    public class UsersContext : DbContext
+    public class UsersService : DbContext
     {
         public DbSet<User> Users { get; set; } = null!;
-        public UsersContext(DbContextOptions<UsersContext> options) : base(options) 
+        public UsersService(DbContextOptions<UsersService> options) : base(options) 
         {
             if (GetByLogin("Admin") == null)
             {

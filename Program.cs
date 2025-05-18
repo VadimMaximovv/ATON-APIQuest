@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using ATON_APIQuest.Users;
+using ATON_APIQuest.Models.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +9,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<UsersContext>(opt => opt.UseInMemoryDatabase("UsersList"));
+builder.Services.AddDbContext<UsersService>(opt => opt.UseInMemoryDatabase("UsersList"));
 
 var app = builder.Build();
 
